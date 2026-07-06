@@ -924,27 +924,73 @@ function onLocInput(val){
 document.addEventListener('click',e=>{if(!e.target.closest('.loc-input-wrap'))document.getElementById('loc-sugg').classList.remove('open')});
 
 /* OVERPASS */
-async function fetchPlaces(lat,lon,radiusKm,type,cuisines){
-  // Live restaurants from OpenStreetMap Overpass (free, no key)
-  const r=radiusKm*1000;
-  const filter=type==='all'?'"amenity"~"restaurant|cafe|fast_food"':`"amenity"="${type}"`;
-  const q=`[out:json][timeout:20];(node[${filter}]["name"](around:${r},${lat},${lon}););out 80;`;
-  try{
+const OVERPASS_MIRRORS=[
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+];
+// Fire ALL mirrors at once; take the first that returns real results.
+// Public Overpass instances are often overloaded, so racing them is far more
+// reliable than trying one-by-one.
+async function overpassQuery(q){
+  const body='data='+encodeURIComponent(q);
+  const attempts=OVERPASS_MIRRORS.map(url=>{
     const ctrl=new AbortController();
-    const tid=setTimeout(()=>ctrl.abort(),7000);
-    const res=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:q,signal:ctrl.signal});
-    clearTimeout(tid);
-    const data=await res.json();
-    let list=data.elements.filter(e=>e.tags?.name).map(e=>{
-      const t=e.tags;
-      const addr=[t['addr:housenumber'],t['addr:street'],t['addr:city']].filter(Boolean).join(', ');
-      return{id:`osm${e.id}`,name:t.name,cuisine:t.cuisine||t.amenity||'restaurant',
-        address:addr,lat:e.lat,lon:e.lon,distance:haversine(lat,lon,e.lat,e.lon),
-        website:t.website||t['contact:website']||'',hours:t.opening_hours||'',phone:t.phone||t['contact:phone']||''};
-    }).sort((a,b)=>a.distance-b.distance);
-    if(cuisines&&cuisines.length){const f=filterByCuisine(list,cuisines);if(f)list=f;else toast('No exact cuisine match in your area – showing all nearby');}
-    return list.slice(0,30).length?list.slice(0,30):demoPlaces(lat,lon,cuisines);
-  }catch{return demoPlaces(lat,lon,cuisines)}
+    const tid=setTimeout(()=>ctrl.abort(),14000);
+    return fetch(url,{method:'POST',body,signal:ctrl.signal})
+      .then(res=>{if(!res.ok)throw new Error(url+' '+res.status);return res.json();})
+      .then(d=>{if(!d||!Array.isArray(d.elements)||!d.elements.length)throw new Error(url+' empty');return d;})
+      .finally(()=>clearTimeout(tid));
+  });
+  try{return await Promise.any(attempts);}catch{return null;}
+}
+// Light "popularity" heuristic from FREE OSM tags (no ratings API needed):
+// notable / well-described places score higher, so they surface first.
+function placeScore(t){
+  let s=0;
+  if(t.wikidata||t.wikipedia)s+=5;              // notable enough to have a wiki entry
+  if(t.brand||t['brand:wikidata'])s+=2;         // known brand/chain
+  if(t.website||t['contact:website'])s+=1;
+  if(t.cuisine)s+=1;
+  if(t.opening_hours)s+=1;
+  if(t.stars)s+=Number(t.stars)||0;             // hotel/restaurant star rating tag
+  return s;
+}
+
+async function fetchPlaces(lat,lon,radiusKm,type,cuisines){
+  // Live restaurants from OpenStreetMap Overpass (free, no key).
+  // nw = nodes + ways, so places mapped as building outlines
+  // (very common in India) are included too — big coverage boost.
+  const r=radiusKm*1000;
+  let sel;
+  if(type==='cafe')      sel='"amenity"~"^(cafe|fast_food)$"';
+  else if(type==='restaurant') sel='"amenity"="restaurant"';
+  else                   sel='"amenity"~"^(restaurant|cafe|fast_food|bar|pub|ice_cream|food_court)$"';
+  const q=`[out:json][timeout:20];nw[${sel}]["name"](around:${r},${lat},${lon});out center 90;`;
+
+  const data=await overpassQuery(q);
+  if(!data)return demoPlaces(lat,lon,cuisines);
+
+  let list=data.elements.filter(e=>e.tags?.name).map(e=>{
+    const t=e.tags;
+    const plat=e.lat??e.center?.lat, plon=e.lon??e.center?.lon;
+    const addr=[t['addr:housenumber'],t['addr:street'],t['addr:suburb']||t['addr:city']].filter(Boolean).join(', ');
+    return{id:`osm${e.type[0]}${e.id}`,name:t.name,cuisine:t.cuisine||t.amenity||t.shop||'restaurant',
+      address:addr,lat:plat,lon:plon,distance:haversine(lat,lon,plat,plon),
+      website:t.website||t['contact:website']||'',hours:t.opening_hours||'',phone:t.phone||t['contact:phone']||'',
+      _score:placeScore(t)};
+  }).filter(e=>e.lat&&e.lon);
+
+  // De-dupe: same place can appear as both a node and a way
+  const seen=new Set();
+  list=list.filter(e=>{const k=e.name.toLowerCase()+'|'+Math.round(e.distance/60);if(seen.has(k))return false;seen.add(k);return true;});
+
+  // Rank: blend popularity (notable/well-tagged) with proximity (~1.5km ≈ 1 point)
+  list.forEach(e=>e._rank=e._score-e.distance/1500);
+  list.sort((a,b)=>b._rank-a._rank);
+
+  if(cuisines&&cuisines.length){const f=filterByCuisine(list,cuisines);if(f)list=f;else toast('No exact cuisine match in your area – showing all nearby');}
+  return list.slice(0,40).length?list.slice(0,40):demoPlaces(lat,lon,cuisines);
 }
 function matchesCuisine(cuisine,picks){
   // cuisine from OSM can be 'north_indian', 'pizza;italian', 'cafe' etc.
