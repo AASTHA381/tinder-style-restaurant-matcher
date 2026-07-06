@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>FoodMatch India</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root{
+  --bg:#0c0502;--bg2:#150b03;--surface:#1c1106;--surface2:#2b1a08;
+  --surface3:#3a240c;--border:#52340f;--amber:#f59e0b;--amber2:#fbbf24;
+  --saffron:#ea7c1e;--cream:#fdf6e3;--cream2:#c9a26a;--muted:#7a5930;
+  --like:#22c55e;--nope:#ef4444;--r:20px;
+  --safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(--cream);
+  font-family:'Poppins',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+
+/* SCREENS */
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;transition:opacity .3s ease;overflow:hidden}
+.screen.active{opacity:1;pointer-events:all}
+
+/* HOME */
+#s-home{justify-content:flex-end;align-items:stretch;padding-bottom:0}
+.home-bg{position:absolute;inset:0;z-index:0;
+  background-image:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&auto=format&q=70');
+  background-size:cover;background-position:center}
+.home-overlay{position:absolute;inset:0;z-index:1;
+  background:linear-gradient(to bottom,rgba(12,5,2,.15) 0%,rgba(12,5,2,.45) 35%,rgba(12,5,2,.92) 60%,#0c0502 100%)}
+.home-floaters{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+.floater{position:absolute;font-size:28px;opacity:.22;animation:floatUp 8s ease-in-out infinite}
+@keyframes floatUp{0%,100%{transform:translateY(0) rotate(0deg);opacity:.22}50%{transform:translateY(-20px) rotate(8deg);opacity:.38}}
+.home-content{position:relative;z-index:3;padding:0 28px calc(var(--safe-b) + 44px);display:flex;flex-direction:column}
+.home-tag{display:inline-block;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.28);
+  color:var(--amber);padding:5px 14px;border-radius:20px;font-size:10px;font-weight:700;
+  letter-spacing:1.8px;text-transform:uppercase;margin-bottom:12px;align-self:flex-start}
+.home-title{font-family:'Playfair Display',Georgia,serif;font-size:50px;font-weight:800;
+  line-height:1;letter-spacing:-2px;color:var(--cream);margin-bottom:6px}
+.home-title em{color:var(--amber);font-style:italic}
+.home-sub{color:var(--cream2);font-size:14px;font-weight:300;margin-bottom:36px;line-height:1.6}
+.home-btns{display:flex;flex-direction:column;gap:11px}
+.home-note{margin-top:14px;color:var(--muted);font-size:11px;text-align:center}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:16px 22px;border-radius:14px;border:none;font-family:'Poppins',sans-serif;
+  font-size:15px;font-weight:600;cursor:pointer;text-decoration:none;transition:transform .12s,opacity .2s}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:linear-gradient(130deg,var(--amber),var(--saffron));color:#fff}
+.btn-outline{background:rgba(255,255,255,.06);color:var(--cream);border:1.5px solid var(--border)}
+.btn-ghost{background:transparent;color:var(--cream2);border:1.5px solid var(--surface3)}
+.btn-full{width:100%}
+.btn-sm{padding:10px 16px;font-size:13px}
+
+/* LAYOUT */
+.screen-bg{position:absolute;inset:0;z-index:0;
+  background:radial-gradient(ellipse 90% 50% at 30% 0%,rgba(245,158,11,.09) 0%,transparent 60%),
+             radial-gradient(ellipse 70% 60% at 80% 100%,rgba(234,124,30,.06) 0%,transparent 50%),var(--bg)}
+.screen-inner{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;overflow:hidden}
+.nav-bar{display:flex;align-items:center;gap:12px;padding:calc(var(--safe-t) + 50px) 20px 14px}
+.nav-bar h2{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;color:var(--cream)}
+.back-btn{width:38px;height:38px;border-radius:50%;background:var(--surface2);
+  border:1px solid var(--border);color:var(--cream2);font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s}
+.back-btn:hover{background:var(--surface3)}
+.scroll-body{flex:1;padding:0 20px calc(var(--safe-b)+24px);overflow-y:auto;display:flex;flex-direction:column;gap:20px}
+.scroll-body.centered{align-items:center;justify-content:center;text-align:center}
+.field-label{display:block;color:var(--amber);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+.section-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px}
+
+/* LOCATION */
+.gps-btn{display:flex;align-items:center;gap:10px;width:100%;padding:14px 16px;border-radius:12px;
+  background:linear-gradient(130deg,rgba(245,158,11,.12),rgba(234,124,30,.08));
+  border:1px solid rgba(245,158,11,.25);color:var(--cream);font-size:14px;font-weight:600;
+  cursor:pointer;transition:all .2s;font-family:'Poppins',sans-serif}
+.gps-btn:active{transform:scale(.97)}
+.g-sub{font-size:11px;color:var(--cream2);font-weight:400}
+.or-divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:11px;letter-spacing:1px;text-transform:uppercase;margin:10px 0}
+.or-divider::before,.or-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.loc-input-wrap{position:relative}
+.loc-input{width:100%;padding:14px 16px;border-radius:12px;background:var(--surface2);
+  border:1.5px solid var(--border);color:var(--cream);font-size:14px;font-family:'Poppins',sans-serif;
+  outline:none;transition:border-color .2s}
+.loc-input::placeholder{color:var(--muted)}
+.loc-input:focus{border-color:var(--amber)}
+.loc-suggestions{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:100;
+  background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden;
+  display:none;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.loc-suggestions.open{display:block}
+.sugg-item{padding:12px 16px;color:var(--cream2);font-size:13px;cursor:pointer;
+  border-bottom:1px solid var(--surface3);transition:background .15s}
+.sugg-item:last-child{border-bottom:none}
+.sugg-item:hover{background:var(--surface3);color:var(--cream)}
+.sugg-item strong{color:var(--amber)}
+.city-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.city-chip{padding:6px 12px;border-radius:20px;border:1px solid var(--border);
+  background:transparent;color:var(--cream2);font-size:12px;font-weight:500;cursor:pointer;
+  transition:all .2s;font-family:'Poppins',sans-serif}
+.city-chip.on,.city-chip:hover{background:rgba(245,158,11,.13);border-color:var(--amber);color:var(--amber)}
+.loc-confirmed{display:none;align-items:center;gap:8px;background:rgba(34,197,94,.1);
+  border:1px solid rgba(34,197,94,.28);border-radius:10px;padding:10px 14px;margin-top:8px;
+  color:#22c55e;font-size:13px;font-weight:500}
+
+/* RANGE */
+.range-section{display:flex;flex-direction:column;gap:12px}
+.range-manual{display:flex;align-items:center;gap:8px}
+.unit{color:var(--cream2);font-size:13px;white-space:nowrap}
+.rupee-sym{color:var(--amber);font-size:17px;font-weight:700}
+.num-input{flex:1;padding:10px 12px;border-radius:10px;background:var(--surface2);
+  border:1.5px solid var(--border);color:var(--cream);font-size:15px;font-weight:600;
+  font-family:'Poppins',sans-serif;outline:none;text-align:center;transition:border-color .2s}
+.num-input:focus{border-color:var(--amber)}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;
+  background:linear-gradient(to right,var(--amber) 0%,var(--amber) var(--pct,25%),var(--surface3) var(--pct,25%));
+  border-radius:4px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;
+  border-radius:50%;background:var(--amber);border:3px solid var(--bg);
+  box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer}
+.range-hints{display:flex;justify-content:space-between;margin-top:2px}
+.range-hints span{color:var(--muted);font-size:10px}
+
+/* TYPE CHIPS */
+.type-chips{display:flex;gap:8px}
+.type-chip{flex:1;padding:12px 8px;border-radius:12px;border:1.5px solid var(--border);
+  background:transparent;color:var(--cream2);font-size:13px;font-weight:600;cursor:pointer;
+  text-align:center;transition:all .2s;font-family:'Poppins',sans-serif}
+.type-chip.on{background:linear-gradient(130deg,rgba(245,158,11,.18),rgba(234,124,30,.12));
+  border-color:var(--amber);color:var(--amber)}
+
+/* CUISINE CHIPS */
+.cuisine-chips{display:flex;flex-wrap:wrap;gap:7px}
+.cuisine-chip{padding:7px 13px;border-radius:20px;border:1.5px solid var(--border);
+  background:transparent;color:var(--cream2);font-size:12px;font-weight:500;cursor:pointer;
+  transition:all .2s;font-family:'Poppins',sans-serif}
+.cuisine-chip.on{background:rgba(245,158,11,.15);border-color:var(--amber);color:var(--amber)}
+
+/* JOIN */
+.join-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:20px;padding:0 24px calc(var(--safe-b)+24px);text-align:center}
+.join-center p{color:var(--cream2);font-size:14px}
+#join-input{width:100%;padding:20px 16px;border-radius:16px;background:var(--surface);
+  border:2px solid var(--border);color:var(--cream);font-size:32px;font-weight:800;
+  letter-spacing:10px;text-align:center;text-transform:uppercase;outline:none;
+  font-family:'Poppins',sans-serif;transition:border-color .2s}
+#join-input:focus{border-color:var(--amber)}
+
+/* LOBBY */
+.lobby-emoji{font-size:58px;margin-bottom:8px}
+.code-box{display:flex;align-items:center;gap:10px;background:var(--surface);
+  border:2px dashed var(--border);border-radius:18px;padding:18px 22px}
+#lobby-code{flex:1;font-family:'Playfair Display',serif;font-size:32px;font-weight:800;
+  letter-spacing:10px;text-align:center;color:var(--amber)}
+.copy-btn{background:var(--surface2);border:none;border-radius:10px;padding:9px 11px;font-size:18px;cursor:pointer}
+.spin-row{display:flex;flex-direction:column;align-items:center;gap:8px;margin:8px 0}
+.spinner{width:28px;height:28px;border:3px solid var(--surface2);border-top-color:var(--amber);
+  border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#lobby-status{color:var(--cream2);font-size:13px;text-align:center}
+
+/* SWIPE */
+#s-swipe{background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(245,158,11,.06) 0%,transparent 60%),var(--bg)}
+.swipe-header{display:flex;justify-content:space-between;align-items:center;
+  padding:calc(var(--safe-t)+52px) 18px 10px}
+.swipe-home-btn{display:flex;align-items:center;justify-content:center;width:38px;height:38px;
+  border-radius:50%;background:var(--surface2);border:1px solid var(--border);
+  color:var(--cream2);font-size:17px;cursor:pointer}
+.swipe-count{background:var(--surface);border:1px solid var(--border);
+  padding:5px 14px;border-radius:20px;color:var(--cream2);font-size:12px;font-weight:600}
+.partner-pill{display:flex;align-items:center;gap:6px;background:var(--surface);
+  border:1px solid var(--border);padding:5px 12px;border-radius:20px}
+.p-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .3s}
+.p-dot.on{background:var(--like)}
+.partner-pill span{font-size:11px;color:var(--cream2)}
+.card-stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;
+  padding:6px 12px;overflow:hidden}
+.swipe-actions{display:flex;align-items:center;justify-content:center;gap:18px;
+  padding:12px 24px calc(var(--safe-b)+24px)}
+.action-btn{display:flex;align-items:center;justify-content:center;border:none;
+  border-radius:50%;cursor:pointer;transition:transform .12s,box-shadow .2s}
+.action-btn:active{transform:scale(.88)}
+.btn-nope{width:62px;height:62px;font-size:24px;background:var(--surface);color:var(--nope);
+  border:1.5px solid rgba(239,68,68,.28);box-shadow:0 4px 16px rgba(239,68,68,.12)}
+.btn-like{width:72px;height:72px;font-size:28px;
+  background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;
+  box-shadow:0 6px 24px rgba(34,197,94,.28)}
+.btn-info{width:46px;height:46px;font-size:17px;background:var(--surface2);
+  color:var(--cream2);border:1px solid var(--border)}
+
+/* CARD */
+.rcard{position:absolute;width:calc(100% - 24px);max-width:390px;
+  height:min(calc(100vh - 200px),570px);border-radius:24px;overflow:hidden;
+  background:var(--surface);box-shadow:0 12px 40px rgba(0,0,0,.6),0 0 0 1px var(--border);
+  user-select:none;touch-action:none;cursor:grab;will-change:transform}
+.rcard:active{cursor:grabbing}
+.card-photo{height:52%;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.card-photo::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,.45) 100%)}
+.card-big-emoji{font-size:82px;filter:drop-shadow(0 4px 16px rgba(0,0,0,.4));position:relative;z-index:1}
+.badge{position:absolute;top:22px;padding:7px 14px;border-radius:9px;font-size:18px;
+  font-weight:900;letter-spacing:2px;opacity:0;border:3px solid;pointer-events:none;z-index:2;
+  font-family:'Poppins',sans-serif}
+.badge-like{left:16px;color:#22c55e;border-color:#22c55e;transform:rotate(-16deg)}
+.badge-nope{right:16px;color:#ef4444;border-color:#ef4444;transform:rotate(16deg)}
+.card-body{padding:14px 18px;display:flex;flex-direction:column;gap:7px}
+.card-name{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;color:var(--cream);line-height:1.2}
+.card-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cuisine-tag{background:rgba(245,158,11,.13);color:var(--amber);padding:3px 10px;
+  border-radius:20px;font-size:11px;font-weight:600;text-transform:capitalize;
+  border:1px solid rgba(245,158,11,.22)}
+.budget-tag{background:rgba(255,255,255,.07);color:var(--cream2);padding:3px 10px;
+  border-radius:20px;font-size:11px;font-weight:600;border:1px solid var(--border)}
+.dist-tag{color:var(--muted);font-size:12px}
+.demo-tag{background:rgba(245,158,11,.1);color:var(--amber);padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;border:1px solid rgba(245,158,11,.2)}
+.card-addr{color:var(--cream2);font-size:12px;opacity:.8}
+.dishes-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:1px}
+.dish-pill{background:var(--surface2);color:var(--cream2);padding:3px 9px;
+  border-radius:20px;font-size:11px;border:1px solid var(--border)}
+.reddit-hint{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:11px;margin-top:1px}
+
+/* INFO PANEL */
+.panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);
+  opacity:0;pointer-events:none;z-index:50;transition:opacity .3s}
+.panel-overlay.open{opacity:1;pointer-events:all}
+.info-panel{position:fixed;bottom:0;left:0;right:0;max-height:88vh;z-index:51;
+  background:var(--bg2);border-radius:24px 24px 0 0;border-top:1px solid var(--border);
+  transform:translateY(100%);transition:transform .4s cubic-bezier(.32,.72,0,1);
+  overflow-y:auto;padding-bottom:calc(var(--safe-b)+24px)}
+.info-panel.open{transform:translateY(0)}
+.panel-drag{width:40px;height:4px;border-radius:4px;background:var(--border);margin:12px auto 0}
+.panel-header-img{height:160px;position:relative;display:flex;align-items:center;
+  justify-content:center;margin:16px 16px 0;border-radius:18px;overflow:hidden}
+.panel-header-emoji{font-size:72px;filter:drop-shadow(0 4px 16px rgba(0,0,0,.4))}
+.panel-content{padding:16px 20px;display:flex;flex-direction:column;gap:16px}
+.panel-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--cream)}
+.panel-meta{display:flex;flex-wrap:wrap;gap:8px}
+.meta-pill{display:flex;align-items:center;gap:5px;background:var(--surface);
+  border:1px solid var(--border);padding:6px 12px;border-radius:20px;font-size:12px;color:var(--cream2)}
+.meta-pill b{color:var(--cream)}
+.psec-title{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--amber);margin-bottom:10px}
+.dishes-grid{display:flex;flex-wrap:wrap;gap:7px}
+.dish-tag{background:var(--surface);border:1px solid var(--border);
+  padding:6px 12px;border-radius:20px;font-size:13px;color:var(--cream2)}
+.reddit-header{display:flex;align-items:center;justify-content:space-between}
+.reddit-logo{display:flex;align-items:center;gap:6px;color:var(--cream);font-size:13px;font-weight:600}
+.reddit-search-link{font-size:11px;color:var(--amber);text-decoration:none;font-weight:500}
+.reddit-loading{display:flex;align-items:center;gap:8px;color:var(--cream2);font-size:13px;padding:12px 0}
+.review-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:10px}
+.review-sub{font-size:11px;color:var(--amber);font-weight:600;margin-bottom:4px}
+.review-title{font-size:13px;color:var(--cream);font-weight:500;line-height:1.4;margin-bottom:6px}
+.review-snippet{font-size:12px;color:var(--cream2);line-height:1.5;margin-bottom:8px;font-style:italic}
+.review-footer{display:flex;align-items:center;justify-content:space-between}
+.review-score{font-size:11px;color:var(--muted)}
+.review-link{font-size:11px;color:var(--amber);text-decoration:none;font-weight:600}
+.reddit-empty{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:16px;text-align:center;color:var(--cream2);font-size:13px;margin-top:8px}
+.reddit-empty a{color:var(--amber);text-decoration:none}
+.panel-actions{display:flex;gap:10px}
+.panel-actions .btn{flex:1;font-size:13px;padding:14px 10px}
+
+/* MATCH */
+#s-match{align-items:center;justify-content:center;padding:32px 22px calc(var(--safe-b)+24px);text-align:center}
+.match-glow{position:absolute;inset:0;opacity:.14;pointer-events:none}
+.match-inner{position:relative;z-index:1;width:100%;max-width:380px;display:flex;flex-direction:column;align-items:center;gap:20px}
+.match-boom{font-size:58px;display:block;animation:pop .5s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes pop{0%{transform:scale(0) rotate(-20deg)}100%{transform:scale(1) rotate(0)}}
+.match-title{font-family:'Playfair Display',serif;font-size:38px;font-weight:800;font-style:italic;
+  background:linear-gradient(120deg,var(--amber2),var(--saffron));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.match-sub{color:var(--cream2);font-size:14px}
+.match-card{width:100%;border-radius:20px;overflow:hidden;background:var(--surface);box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.match-photo{height:150px;display:flex;align-items:center;justify-content:center;font-size:72px}
+.match-info{padding:16px 18px}
+.match-info h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:4px}
+.match-info p{color:var(--cream2);font-size:13px}
+.match-btns{display:flex;flex-direction:column;gap:10px;width:100%}
+
+/* BUST */
+.bust-emoji{font-size:58px;margin-bottom:12px}
+#s-bust .scroll-body{gap:14px}
+#s-bust p{color:var(--cream2);font-size:14px;line-height:1.6}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(var(--safe-b)+88px);left:50%;
+  transform:translateX(-50%) translateY(12px);background:var(--surface2);
+  border:1px solid var(--border);color:var(--cream);padding:10px 20px;
+  border-radius:20px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;
+  transition:all .3s;white-space:nowrap;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="s-home" class="screen active">
+  <div class="home-bg"></div>
+  <div class="home-overlay"></div>
+  <div class="home-floaters" id="floaters"></div>
+  <div class="home-content">
+    <div class="home-tag">India's Restaurant Matcher</div>
+    <h1 class="home-title"><em>Food</em><br>Match</h1>
+    <p class="home-sub">Stop the endless "where do you want to eat?" debate.<br>Both swipe. First match wins.</p>
+    <div class="home-btns">
+      <button class="btn btn-primary" onclick="nav('create')">🎲 Create a Room</button>
+      <button class="btn btn-outline" onclick="nav('join')">🔗 Join a Room</button>
+    </div>
+    <p class="home-note">Real restaurants · Reddit reviews · Budget in ₹</p>
+  </div>
+</div>
+
+<!-- CREATE -->
+<div id="s-create" class="screen">
+  <div class="screen-bg"></div>
+  <div class="screen-inner">
+    <div class="nav-bar">
+      <button class="back-btn" onclick="nav('home')">←</button>
+      <h2>Set Up Your Room</h2>
+    </div>
+    <div class="scroll-body" style="padding-top:4px">
+
+      <div class="section-card">
+        <label class="field-label">📍 Your Location</label>
+        <button class="gps-btn" id="gps-btn" onclick="detectGPS()">
+          <span style="font-size:20px">📡</span>
+          <div style="flex:1;text-align:left">
+            <div>Detect my exact location</div>
+            <div class="g-sub" id="gps-sub">Uses GPS for precise restaurant results</div>
+          </div>
+        </button>
+        <div class="or-divider"><span>or enter manually</span></div>
+        <div class="loc-input-wrap">
+          <input class="loc-input" id="loc-input" type="text"
+            placeholder="Search city, area, or address in India..."
+            autocomplete="off" spellcheck="false" oninput="onLocInput(this.value)">
+          <div class="loc-suggestions" id="loc-sugg"></div>
+        </div>
+        <div class="city-chips">
+          <button class="city-chip" onclick="setCity('Mumbai',19.076,72.877)">🏙 Mumbai</button>
+          <button class="city-chip" onclick="setCity('Delhi',28.704,77.102)">🏛 Delhi</button>
+          <button class="city-chip" onclick="setCity('Bangalore',12.972,77.594)">🌿 Bangalore</button>
+          <button class="city-chip" onclick="setCity('Chennai',13.083,80.270)">🌊 Chennai</button>
+          <button class="city-chip" onclick="setCity('Hyderabad',17.386,78.476)">💎 Hyderabad</button>
+          <button class="city-chip" onclick="setCity('Pune',18.521,73.856)">☕ Pune</button>
+          <button class="city-chip" onclick="setCity('Kolkata',22.572,88.364)">🐟 Kolkata</button>
+          <button class="city-chip" onclick="setCity('Jaipur',26.912,75.787)">🏰 Jaipur</button>
+          <button class="city-chip" onclick="setCity('Goa',15.299,74.124)">🏖 Goa</button>
+          <button class="city-chip" onclick="setCity('Kochi',9.939,76.270)">🌴 Kochi</button>
+          <button class="city-chip" onclick="setCity('Chandigarh',30.733,76.779)">🏔 Chandigarh</button>
+          <button class="city-chip" onclick="setCity('Ahmedabad',23.033,72.618)">🏟 Ahmedabad</button>
+        </div>
+        <div class="loc-confirmed" id="loc-confirmed">
+          ✅ <span id="loc-name-display">Location set</span>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <label class="field-label">🔍 Search Radius</label>
+        <div class="range-section">
+          <div class="range-manual">
+            <input type="number" class="num-input" id="radius-num" min="1" max="50" value="3" style="max-width:90px">
+            <span class="unit">km from you</span>
+          </div>
+          <input type="range" id="radius-range" min="1" max="20" step="1" value="3" oninput="syncRadius(this.value)">
+          <div class="range-hints"><span>1 km</span><span>7 km</span><span>14 km</span><span>20 km</span></div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <label class="field-label">💰 Budget Per Person</label>
+        <div class="range-section">
+          <div class="range-manual">
+            <span class="rupee-sym">₹</span>
+            <input type="number" class="num-input" id="budget-num" min="50" max="10000" step="50" value="600" style="max-width:110px">
+            <span class="unit">per person</span>
+          </div>
+          <input type="range" id="budget-range" min="50" max="3000" step="50" value="600" oninput="syncBudget(this.value)">
+          <div class="range-hints"><span>₹50</span><span>₹1,000</span><span>₹2,000</span><span>₹3,000</span></div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <label class="field-label">🍽 I&apos;m Looking For</label>
+        <div class="type-chips">
+          <button class="type-chip on" data-v="all" onclick="setType(this)">🍽️ All</button>
+          <button class="type-chip" data-v="restaurant" onclick="setType(this)">🥘 Restaurants</button>
+          <button class="type-chip" data-v="cafe" onclick="setType(this)">☕ Cafes</button>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <label class="field-label">🍳 Preferred Cuisine</label>
+        <p style="color:var(--muted);font-size:11px;margin-bottom:10px">Select one or more — we'll prioritise these</p>
+        <div class="cuisine-chips" id="cuisine-chips">
+          <button class="cuisine-chip on" data-v="" onclick="toggleCuisine(this)">🍽 All</button>
+          <button class="cuisine-chip" data-v="north_indian" onclick="toggleCuisine(this)">🍛 North Indian</button>
+          <button class="cuisine-chip" data-v="south_indian" onclick="toggleCuisine(this)">🥘 South Indian</button>
+          <button class="cuisine-chip" data-v="mughlai" onclick="toggleCuisine(this)">🍢 Mughlai</button>
+          <button class="cuisine-chip" data-v="chinese" onclick="toggleCuisine(this)">🥢 Chinese</button>
+          <button class="cuisine-chip" data-v="cafe" onclick="toggleCuisine(this)">☕ Cafe</button>
+          <button class="cuisine-chip" data-v="biryani" onclick="toggleCuisine(this)">🍚 Biryani</button>
+          <button class="cuisine-chip" data-v="italian" onclick="toggleCuisine(this)">🍝 Italian</button>
+          <button class="cuisine-chip" data-v="street_food" onclick="toggleCuisine(this)">🌮 Street Food</button>
+          <button class="cuisine-chip" data-v="seafood" onclick="toggleCuisine(this)">🦐 Seafood</button>
+          <button class="cuisine-chip" data-v="kerala" onclick="toggleCuisine(this)">🥥 Kerala</button>
+          <button class="cuisine-chip" data-v="bengali" onclick="toggleCuisine(this)">🐟 Bengali</button>
+          <button class="cuisine-chip" data-v="punjabi" onclick="toggleCuisine(this)">🫓 Punjabi</button>
+          <button class="cuisine-chip" data-v="rajasthani" onclick="toggleCuisine(this)">🫙 Rajasthani</button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-full" onclick="createRoom()">✨ Create Room</button>
+    </div>
+  </div>
+</div>
+
+<!-- JOIN -->
+<div id="s-join" class="screen">
+  <div class="screen-bg"></div>
+  <div class="screen-inner">
+    <div class="nav-bar">
+      <button class="back-btn" onclick="nav('home')">←</button>
+      <h2>Join a Room</h2>
+    </div>
+    <div class="join-center">
+      <p>Enter the 6-letter code your friend shared</p>
+      <input id="join-input" type="text" maxlength="6" placeholder="ABC123"
+        autocomplete="off" spellcheck="false"
+        oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')">
+      <button class="btn btn-primary btn-full" onclick="joinRoom()">Join Room →</button>
+      <button class="btn btn-ghost btn-full" onclick="nav('home')">← Back to Home</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOBBY -->
+<div id="s-lobby" class="screen">
+  <div class="screen-bg"></div>
+  <div class="screen-inner">
+    <div class="scroll-body centered" style="gap:16px">
+      <div class="lobby-emoji">🍽️</div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:26px" id="lobby-title">Room Created!</h2>
+      <p style="color:var(--cream2);font-size:14px" id="lobby-sub">Share this code with your friend</p>
+      <div class="code-box">
+        <span id="lobby-code">------</span>
+        <button class="copy-btn" onclick="copyCode()" title="Copy">📋</button>
+      </div>
+      <div class="spin-row">
+        <div class="spinner"></div>
+        <p id="lobby-status">Fetching restaurants…</p>
+      </div>
+      <button id="solo-btn" class="btn btn-ghost btn-sm" onclick="openDemoTab()" style="display:none">
+        🧪 Open Demo Tab (same-device test)
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="nav('home')" style="margin-top:4px">← Back to Home</button>
+    </div>
+  </div>
+</div>
+
+<!-- SWIPE -->
+<div id="s-swipe" class="screen">
+  <div class="swipe-header">
+    <button class="swipe-home-btn" onclick="nav('home')" title="Home">🏠</button>
+    <div class="swipe-count"><span id="s-cur">0</span> of <span id="s-tot">0</span></div>
+    <div class="partner-pill">
+      <div class="p-dot" id="p-dot"></div>
+      <span id="p-label">Waiting…</span>
+    </div>
+  </div>
+  <div class="card-stage" id="card-stage"></div>
+  <div class="swipe-actions">
+    <button class="action-btn btn-nope" onclick="btnSwipe('left')" title="Nope">✕</button>
+    <button class="action-btn btn-info" onclick="openInfoPanel()" title="Reviews &amp; Info">ℹ</button>
+    <button class="action-btn btn-like" onclick="btnSwipe('right')" title="Like">♥</button>
+  </div>
+</div>
+
+<!-- MATCH -->
+<div id="s-match" class="screen">
+  <div class="match-glow" id="match-glow"></div>
+  <div class="match-inner">
+    <div>
+      <span class="match-boom">🎉</span>
+      <div class="match-title">It&apos;s a Match!</div>
+      <p class="match-sub">You&apos;re both eating here tonight</p>
+    </div>
+    <div class="match-card" id="match-card"></div>
+    <div class="match-btns">
+      <a id="maps-link" class="btn btn-primary btn-full" href="#" target="_blank" rel="noopener">🗺️ Open in Maps</a>
+      <button class="btn btn-outline btn-full" onclick="playAgain()">🔄 Swipe Again</button>
+      <button class="btn btn-ghost btn-full" onclick="nav('home')">🏠 Back to Home</button>
+    </div>
+  </div>
+</div>
+
+<!-- BUST -->
+<div id="s-bust" class="screen">
+  <div class="screen-bg"></div>
+  <div class="screen-inner">
+    <div class="scroll-body centered" style="gap:14px">
+      <div class="bust-emoji">😔</div>
+      <h2 style="font-family:'Playfair Display',serif">No Match Found</h2>
+      <p>You&apos;ve swiped through all spots. Try increasing your radius or changing budget!</p>
+      <button class="btn btn-primary" onclick="playAgain()">🔄 Swipe Again</button>
+      <button class="btn btn-outline" onclick="nav('create')">⚙️ Change Settings</button>
+      <button class="btn btn-ghost" onclick="nav('home')">🏠 Back to Home</button>
+    </div>
+  </div>
+</div>
+
+<!-- INFO PANEL -->
+<div class="panel-overlay" id="panel-overlay" onclick="closeInfoPanel()"></div>
+<div class="info-panel" id="info-panel">
+  <div class="panel-drag"></div>
+  <div class="panel-header-img" id="panel-img"></div>
+  <div class="panel-content" id="panel-content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* FoodMatch India – Complete App */
+
+const THEMES={
+  north_indian:['🍛','135deg,#bf360c,#e65100'],south_indian:['🥘','135deg,#1b5e20,#388e3c'],
+  mughlai:['🍢','135deg,#4a148c,#7b1fa2'],biryani:['🍚','135deg,#e65100,#ff8f00'],
+  chinese:['🥢','135deg,#b71c1c,#c62828'],pizza:['🍕','135deg,#d32f2f,#ef5350'],
+  italian:['🍝','135deg,#bf360c,#e53935'],cafe:['☕','135deg,#3e2723,#6d4c41'],
+  coffee:['☕','135deg,#4e342e,#795548'],bakery:['🥐','135deg,#5d4037,#8d6e63'],
+  seafood:['🦐','135deg,#01579b,#0288d1'],kerala:['🥥','135deg,#1b5e20,#2e7d32'],
+  bengali:['🐟','135deg,#004d40,#00695c'],rajasthani:['🫙','135deg,#bf360c,#d84315'],
+  gujarati:['🥗','135deg,#f57f17,#ff8f00'],punjabi:['🫓','135deg,#e65100,#bf360c'],
+  hyderabadi:['🍲','135deg,#880e4f,#ad1457'],maharashtrian:['🌶','135deg,#c62828,#e53935'],
+  street_food:['🌮','135deg,#e65100,#f57f17'],fast_food:['🍔','135deg,#bf360c,#e64a19'],
+  american:['🍔','135deg,#bf360c,#e64a19'],mexican:['🌮','135deg,#2e7d32,#f57f17'],
+  thai:['🍜','135deg,#6a1b9a,#ad1457'],japanese:['🍣','135deg,#1a237e,#3949ab'],
+  korean:['🍱','135deg,#b71c1c,#6a1b9a'],bar:['🍺','135deg,#e65100,#bf360c'],
+  pub:['🍺','135deg,#4e342e,#795548'],ice_cream:['🍦','135deg,#e91e63,#f48fb1'],
+  desserts:['🍮','135deg,#e91e63,#880e4f'],_:['🍽️','135deg,#37474f,#546e7a'],
+};
+
+const DISHES={
+  north_indian:['Butter Chicken','Dal Makhani','Paneer Tikka','Naan','Lassi'],
+  south_indian:['Masala Dosa','Idli Sambar','Filter Coffee','Uttapam','Vada'],
+  mughlai:['Dum Biryani','Seekh Kebab','Nihari','Korma','Shahi Tukda'],
+  biryani:['Chicken Biryani','Mutton Biryani','Veg Biryani','Raita','Salan'],
+  chinese:['Chilli Chicken','Hakka Noodles','Manchurian','Veg Momos','Fried Rice'],
+  pizza:['Margherita','Paneer Pizza','Pasta','Garlic Bread','Tiramisu'],
+  italian:['Pasta','Wood-fired Pizza','Risotto','Tiramisu','Bruschetta'],
+  cafe:['Cold Coffee','Cappuccino','Croissant','Club Sandwich','Waffles'],
+  coffee:['Filter Coffee','Cold Brew','Latte','Muffins','Sandwiches'],
+  bakery:['Fresh Bread','Croissants','Cakes','Pastries','Quiche'],
+  seafood:['Prawn Masala','Fish Fry','Crab Curry','Lobster','Pomfret'],
+  kerala:['Fish Curry','Appam & Stew','Puttu','Kerala Sadya','Karimeen'],
+  bengali:['Kosha Mangsho','Rosogolla','Fish Curry','Mishti Doi','Luchi'],
+  rajasthani:['Dal Baati','Gatte ki Sabzi','Laal Maas','Churma','Bajra Roti'],
+  gujarati:['Dhokla','Thepla','Undhiyu','Khandvi','Fafda Jalebi'],
+  punjabi:['Makki di Roti','Chole Bhature','Amritsari Kulcha','Sarson Saag','Lassi'],
+  hyderabadi:['Hyderabadi Biryani','Haleem','Mirchi ka Salan','Qubani Meetha'],
+  maharashtrian:['Vada Pav','Misal Pav','Puran Poli','Sabudana Khichdi'],
+  street_food:['Pani Puri','Vada Pav','Pav Bhaji','Chaat','Bhel Puri'],
+  fast_food:['Burger','Fries','Wraps','Cold Coffee','Milkshake'],
+  thai:['Pad Thai','Green Curry','Tom Kha','Spring Rolls','Pad See Ew'],
+  japanese:['Sushi','Ramen','Tempura','Miso Soup','Udon'],
+  korean:['Bibimbap','Korean BBQ','Kimchi Jjigae','Japchae','Tteokbokki'],
+  bar:['Craft Beer','Cocktails','Nachos','Chicken Wings','Sliders'],
+  ice_cream:['Kulfi','Falooda','Sundae','Mango Sorbet','Choco Brownie'],
+  american:['Gourmet Burger','BBQ Ribs','Mac & Cheese','Onion Rings','Milkshake'],
+  _:["Chef's Special","Seasonal Menu","House Specials"],
+};
+
+function getTheme(c){const k=(c||'').toLowerCase().split(/[;,_\s]/)[0].replace(/[^a-z]/g,'');return THEMES[k]||THEMES._}
+function getDishes(c){const k=(c||'').toLowerCase().split(/[;,_\s]/)[0].replace(/[^a-z]/g,'');return DISHES[k]||DISHES._}
+
+/* CITY-SPECIFIC DEMO RESTAURANTS — real approximate coordinates */
+const CITY_DEMOS={
+  hyderabad:[
+    ['Paradise Biryani','biryani','MG Road, Secunderabad',17.4435,78.4982],
+    ['Cafe Bahar','hyderabadi','Himayatnagar',17.4062,78.4691],
+    ['Shah Ghouse','biryani','Tolichowki',17.4028,78.4216],
+    ['Bawarchi','hyderabadi','RTC X Roads',17.4326,78.4953],
+    ['Pista House','hyderabadi','Nampally',17.3802,78.4698],
+    ['Hotel Shadab','hyderabadi','Charminar Old City',17.3616,78.4747],
+    ['Chutneys','south_indian','Banjara Hills Rd 12',17.4103,78.4431],
+    ['Rayalaseema Ruchulu','south_indian','Mehdipatnam',17.3972,78.4344],
+    ['Farzi Cafe','mughlai','HITEC City',17.4435,78.3772],
+    ['Social Offline','cafe','Jubilee Hills',17.4226,78.4062],
+    ['Starbucks','cafe','Inorbit Mall Madhapur',17.4430,78.3840],
+    ['AB\'s Absolute Barbecues','north_indian','Somajiguda',17.4220,78.4547],
+    ['Barbeque Nation','north_indian','Gachibowli',17.4390,78.3495],
+    ['Karachi Bakery','bakery','Moazzam Jahi Market',17.3851,78.4869],
+    ['The Fisherman\'s Wharf','seafood','Kondapur',17.4589,78.3601],
+  ],
+  mumbai:[
+    ['Trishna','seafood','Fort Area',18.9312,72.8338],
+    ['The Bombay Canteen','maharashtrian','Lower Parel',19.0021,72.8243],
+    ['Britannia & Co','persian','Ballard Estate',18.9342,72.8427],
+    ['Bade Miyan','mughlai','Colaba',18.9223,72.8316],
+    ['Social Offline','cafe','Bandra West',19.0605,72.8363],
+    ['Bastian','seafood','Bandra West',19.0649,72.8373],
+    ['Khyber','north_indian','Fort',18.9308,72.8367],
+    ['Rajdhani','gujarati','Dadar',19.0178,72.8478],
+    ['Cafe Mondegar','cafe','Colaba',18.9228,72.8319],
+    ['Shree Thaker Bhojanalay','gujarati','Kalbadevi',18.9491,72.8261],
+    ['Starbucks Reserve','cafe','Horniman Circle',18.9332,72.8342],
+    ['FIO Cookhouse','italian','Bandra Kurla',19.0651,72.8658],
+    ['Yauatcha','chinese','BKC',19.0604,72.8659],
+    ['Oh! Calcutta','bengali','Bandra',19.0544,72.8301],
+    ['Moshe\'s Cafe','cafe','Juhu',19.1035,72.8268],
+  ],
+  delhi:[
+    ['Bukhara','north_indian','ITC Maurya Chanakyapuri',28.5959,77.1855],
+    ['Moti Mahal','mughlai','Daryaganj',28.6415,77.2376],
+    ['Haldiram\'s','north_indian','Chandni Chowk',28.6508,77.2310],
+    ['Khan Chacha','mughlai','Khan Market',28.5988,77.2268],
+    ['Social Offline','cafe','Hauz Khas',28.5527,77.1948],
+    ['Blue Tokai Coffee','cafe','Vasant Vihar',28.5614,77.1566],
+    ['Swagath','seafood','Defence Colony',28.5706,77.2329],
+    ['Dhaba By Claridges','north_indian','Aurangzeb Road',28.5963,77.2182],
+    ['Saravana Bhavan','south_indian','Connaught Place',28.6315,77.2167],
+    ['Indian Accent','continental','Lodhi Road',28.5918,77.2206],
+    ['Big Chill Cafe','italian','Khan Market',28.6001,77.2266],
+    ['Farzi Cafe','mughlai','Cyber Hub Gurugram',28.4948,77.0895],
+    ['Gulati Restaurant','north_indian','Pandara Road',28.5965,77.2288],
+    ['Andhra Pradesh Bhawan','south_indian','Ashoka Road',28.6166,77.2078],
+    ['Lodi Garden Restaurant','continental','Lodhi Road',28.5933,77.2215],
+  ],
+  bangalore:[
+    ['MTR 1924','south_indian','Lalbagh Road',12.9519,77.5904],
+    ['Vidyarthi Bhavan','south_indian','Gandhi Bazaar',12.9372,77.5876],
+    ['Truffles','american','Koramangala 5th Block',12.9340,77.6256],
+    ['Social Offline','cafe','Koramangala',12.9326,77.6244],
+    ['Third Wave Coffee','cafe','Indiranagar 100ft Rd',12.9716,77.6408],
+    ['Karavalli','kerala','Taj Gateway Hotel',12.9758,77.5886],
+    ['Barbeque Nation','north_indian','Indiranagar',12.9727,77.6392],
+    ['Burma Burma','thai','Forum Mall',12.9281,77.6271],
+    ['The Only Place','american','Museum Road',12.9753,77.6132],
+    ['Koshy\'s','continental','St Marks Road',12.9762,77.6106],
+    ['Blue Tokai Coffee','cafe','Koramangala',12.9347,77.6236],
+    ['Toit Brewpub','bar','Indiranagar',12.9788,77.6404],
+    ['Nagarjuna','south_indian','Residency Road',12.9732,77.6134],
+    ['Hatti Kaapi','cafe','Brigade Road',12.9749,77.6118],
+    ['Chinita','mexican','Indiranagar',12.9729,77.6387],
+  ],
+  chennai:[
+    ['Saravana Bhavan','south_indian','Anna Salai',13.0476,80.2499],
+    ['Murugan Idli Shop','south_indian','T Nagar',13.0397,80.2338],
+    ['Anjappar','south_indian','Anna Salai',13.0566,80.2482],
+    ['Chettinad Palace','south_indian','Nungambakkam',13.0524,80.2459],
+    ['Copper Chimney','north_indian','Anna Salai',13.0556,80.2497],
+    ['Carnatic Cafe','south_indian','Besant Nagar',13.0013,80.2684],
+    ['Starbucks','cafe','Express Avenue',13.0602,80.2678],
+    ['The Flying Elephant','continental','Park Hyatt',13.0565,80.2581],
+    ['Peshwari','north_indian','ITC Grand Chola',13.0568,80.2609],
+    ['Dakshin','south_indian','ITC Chola Hotel',13.0568,80.2609],
+    ['Burma Burma','thai','Nungambakkam',13.0542,80.2449],
+    ['Ente Keralam','kerala','Nungambakkam',13.0537,80.2468],
+    ['Ponnusamy Hotel','south_indian','Egmore',13.0741,80.2628],
+    ['Dindigul Thalappakatti','biryani','Anna Salai',13.0479,80.2503],
+    ['The Raintree','south_indian','Cathedral Road',13.0582,80.2593],
+  ],
+  kolkata:[
+    ['Peter Cat','bengali','Park Street',22.5553,88.3523],
+    ['Oh Calcutta','bengali','Forum Mall Elgin Rd',22.5266,88.3617],
+    ['Arsalan','biryani','Park Circus',22.5370,88.3723],
+    ['Mocambo','continental','Park Street',22.5557,88.3527],
+    ['Flury\'s','bakery','Park Street',22.5565,88.3533],
+    ['6 Ballygunge Place','bengali','Ballygunge',22.5267,88.3663],
+    ['Nizam\'s Restaurant','mughlai','New Market',22.5627,88.3533],
+    ['Amber Restaurant','north_indian','New Market',22.5627,88.3528],
+    ['Kewpie\'s Kitchen','bengali','Elgin Lane',22.5388,88.3566],
+    ['Barbeque Nation','north_indian','Salt Lake Sector V',22.5756,88.4371],
+    ['Kwality Restaurant','north_indian','Park Street',22.5555,88.3528],
+    ['Oudh 1590','mughlai','Beck Bagan',22.5361,88.3630],
+    ['Sigree','north_indian','Elgin Road',22.5369,88.3568],
+    ['Mainland China','chinese','Elgin Road',22.5371,88.3573],
+    ['Cafe Coffee Day','cafe','Park Street',22.5562,88.3523],
+  ],
+  pune:[
+    ['Vaishali','south_indian','FC Road',18.5204,73.8427],
+    ['Cafe Goodluck','cafe','Deccan Gymkhana',18.5165,73.8440],
+    ['Barbeque Nation','north_indian','Senapati Bapat Road',18.5286,73.8476],
+    ['Spice Kitchen','north_indian','Koregaon Park',18.5362,73.8976],
+    ['Sujata Mastani','cafe','Sadashiv Peth',18.5168,73.8536],
+    ['Social Offline','cafe','Koregaon Park',18.5342,73.8930],
+    ['Mainland China','chinese','Koregaon Park',18.5356,73.8973],
+    ['Cafe Peter','continental','Connaught Road',18.5307,73.8727],
+    ['Durvankur Restaurant','maharashtrian','Narayan Peth',18.5163,73.8489],
+    ['Arthur\'s Theme','cafe','MG Road',18.5306,73.8721],
+    ['Malaka Spice','asian','Koregaon Park',18.5358,73.8972],
+    ['Shabree','maharashtrian','Kothrud',18.5063,73.8162],
+    ['Blue Nile','north_indian','Fergusson College Rd',18.5176,73.8404],
+    ['Paasha','north_indian','JW Marriott',18.5389,73.9168],
+    ['Dario\'s','italian','Koregaon Park',18.5355,73.8977],
+  ],
+  jaipur:[
+    ['Chokhi Dhani','rajasthani','Tonk Road',26.8211,75.8048],
+    ['Laxmi Mishthan Bhandar','rajasthani','Johari Bazaar',26.9196,75.8246],
+    ['Peacock Roof Top Restaurant','rajasthani','Hathroi Fort',26.9215,75.7914],
+    ['Copper Chimney','north_indian','MI Road',26.9177,75.7997],
+    ['Little Italy','italian','C-scheme',26.9127,75.7905],
+    ['Bar Palladio','italian','Narain Niwas Palace',26.9008,75.8134],
+    ['Handi Restaurant','north_indian','MI Road',26.9176,75.7995],
+    ['Niro\'s','north_indian','MI Road',26.9164,75.8022],
+    ['Anokhi Cafe','cafe','KK Square',26.9072,75.8074],
+    ['Suvarna Mahal','rajasthani','Rambagh Palace',26.8986,75.8088],
+    ['Four Seasons Restaurant','north_indian','Subhash Nagar',26.9228,75.7784],
+    ['Spice Court','rajasthani','Civil Lines',26.9228,75.7785],
+    ['Tapri Central','cafe','C-scheme',26.9147,75.7908],
+    ['Cafe Coffee Day','cafe','MI Road',26.9158,75.8004],
+    ['Trio Restaurant','rajasthani','Narain Niwas',26.9010,75.8131],
+  ],
+  goa:[
+    ['Fisherman\'s Wharf','seafood','Cavelossim',15.1753,73.9396],
+    ['Martin\'s Corner','seafood','Betalbatim',15.2793,73.9458],
+    ['Thalassa','greek','Vagator',15.5948,73.7480],
+    ['La Plage','continental','Ashvem',15.6385,73.7363],
+    ['Gunpowder','kerala','Assagao',15.5872,73.7679],
+    ['Cafe Chocolatti','cafe','Panjim',15.4986,73.8278],
+    ['Viva Panjim','goan','Panjim',15.5009,73.8284],
+    ['Artjuna Cafe','cafe','Anjuna',15.5721,73.7473],
+    ['Black Sheep Bistro','continental','Panjim',15.4978,73.8276],
+    ['Antares Restaurant','continental','Vagator',15.5999,73.7454],
+    ['Britto\'s','seafood','Baga',15.5577,73.7536],
+    ['Kokni Kanteen','goan','Cavelossim',15.1764,73.9399],
+    ['A Reverie','continental','Calangute',15.5436,73.7559],
+    ['Curlies','cafe','Anjuna',15.5692,73.7402],
+    ['Vinayak Family Restaurant','goan','Margao',15.2742,74.0149],
+  ],
+  kochi:[
+    ['Fort House Restaurant','seafood','Fort Kochi',9.9655,76.2427],
+    ['Malabar Junction','kerala','Fort Kochi',9.9654,76.2427],
+    ['Kashi Art Cafe','cafe','Fort Kochi',9.9657,76.2432],
+    ['Oceanos','seafood','Fort Kochi',9.9667,76.2437],
+    ['Dal Roti','north_indian','Ernakulam',9.9861,76.2888],
+    ['Pai Brothers','seafood','Broadway',9.9836,76.2897],
+    ['Aarya Nivas','south_indian','Ernakulam',9.9857,76.2918],
+    ['History Restaurant','kerala','Fort Kochi',9.9664,76.2428],
+    ['Fusion Bay','kerala','Broadway',9.9826,76.2894],
+    ['Ginger House Restaurant','kerala','Mattancherry',9.9591,76.2595],
+    ['Absolute Barbeque','north_indian','Panampilly Nagar',9.9619,76.3007],
+    ['Kayees Rahmathulla Hotel','kerala','Mattancherry',9.9589,76.2594],
+    ['Starbucks','cafe','Lulu Mall',10.0134,76.3127],
+    ['Qissa Cafe','cafe','Fort Kochi',9.9651,76.2432],
+    ['Abad Nucleus','kerala','MG Road',9.9845,76.2898],
+  ],
+  chandigarh:[
+    ['Pal Dhaba','punjabi','Sector 28',30.7401,76.7859],
+    ['Gopal Sweets','north_indian','Sector 35',30.7341,76.7761],
+    ['Barbeque Nation','north_indian','Sector 17',30.7413,76.7804],
+    ['Pashtun Restaurant','north_indian','Sector 26',30.7299,76.8001],
+    ['Saffron Restaurant','mughlai','Sector 17',30.7416,76.7803],
+    ['Indian Coffee House','cafe','Sector 17',30.7412,76.7800],
+    ['Whistling Duck','continental','Industrial Area',30.7208,76.8025],
+    ['Eatery by Nature','cafe','Sector 26',30.7294,76.7997],
+    ['Tao Kitchen','chinese','Sector 9',30.7477,76.7893],
+    ['The Backyard','cafe','Sector 26',30.7290,76.8005],
+    ['Mehfil Restaurant','north_indian','Sector 22',30.7305,76.7852],
+    ['Ghazal Restaurant','mughlai','Sector 17',30.7415,76.7805],
+    ['Sindhi Sweets','north_indian','Sector 17',30.7411,76.7799],
+    ['Cafe Coffee Day','cafe','Sector 17',30.7409,76.7795],
+    ['The Sky Bar','cafe','Sector 26',30.7295,76.8002],
+  ],
+  ahmedabad:[
+    ['Agashiye','gujarati','Heritage Walk Lal Darwaja',23.0241,72.5865],
+    ['Green House Restaurant','gujarati','CG Road',23.0315,72.5560],
+    ['Vishala Village Restaurant','gujarati','Vasna',22.9985,72.5679],
+    ['Swati Snacks','gujarati','Shrimali Society',23.0360,72.5580],
+    ['Gordhan Thal','gujarati','Navrangpura',23.0273,72.5651],
+    ['Honest Restaurant','north_indian','Navrangpura',23.0292,72.5608],
+    ['Rajwadu','gujarati','Premal Park',23.0201,72.6082],
+    ['Barbeque Nation','north_indian','SG Highway',23.0447,72.5021],
+    ['Farzi Cafe','mughlai','Alpha One Mall',23.0307,72.5113],
+    ['Social Offline','cafe','Bodakdev',23.0376,72.5083],
+    ['Sankalp Restaurant','south_indian','CG Road',23.0310,72.5554],
+    ['London Taxi','continental','Satellite',23.0239,72.5278],
+    ['The Grand Bhagwati','gujarati','SG Highway',23.0491,72.5013],
+    ['Patang Hotel','gujarati','Navarangpura',23.0277,72.5648],
+    ['Cafe Coffee Day','cafe','CG Road',23.0315,72.5555],
+  ],
+};
+
+const APP={role:null,code:null,uid:null,restaurants:[],idx:0,mine:{},theirs:{},matched:false,partnerOn:false,location:null,settings:{radius:3,budget:600,type:'all'}};
+
+const mkUid=()=>'u'+Math.random().toString(36).slice(2,10);
+const mkCode=()=>{const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:6},()=>c[Math.floor(Math.random()*c.length)]).join('')};
+const fmtDist=m=>m<1000?`${m}m`:`${(m/1000).toFixed(1)}km`;
+const fmtRs=n=>'₹'+Number(n).toLocaleString('en-IN');
+const mapsUrl=r=>`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.name+' '+(r.address||''))}`;
+function haversine(a,b,c,d){if(!c||!d)return 0;const R=6371000,p1=a*Math.PI/180,p2=c*Math.PI/180,dp=(c-a)*Math.PI/180,dl=(d-b)*Math.PI/180,x=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;return Math.round(R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)))}
+function toast(msg,ms=2500){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),ms)}
+
+/* FLOATERS */
+function initFloaters(){const wrap=document.getElementById('floaters');['🍛','☕','🍜','🥘','🍕','🍣','🌮','🍱','🥐','🍔','🍢','🥗'].forEach((e,i)=>{const el=document.createElement('div');el.className='floater';el.textContent=e;el.style.cssText=`left:${8+Math.random()*84}%;top:${5+Math.random()*65}%;animation-delay:${i*.55}s;animation-duration:${6+Math.random()*6}s`;wrap.appendChild(el)})}
+
+/* SCREENS */
+function nav(name){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('s-'+name).classList.add('active')}
+
+/* RANGE */
+function syncRadius(v){document.getElementById('radius-num').value=v;updateTrack('radius-range')}
+function syncBudget(v){document.getElementById('budget-num').value=v;updateTrack('budget-range')}
+function updateTrack(id){const el=document.getElementById(id);if(!el)return;const pct=((+el.value-+el.min)/(+el.max-+el.min)*100).toFixed(1);el.style.setProperty('--pct',pct+'%')}
+document.getElementById('radius-num').addEventListener('input',function(){const v=Math.min(50,Math.max(1,+this.value||3));document.getElementById('radius-range').value=Math.min(20,v);updateTrack('radius-range')});
+document.getElementById('budget-num').addEventListener('input',function(){const v=Math.min(10000,Math.max(50,+this.value||600));document.getElementById('budget-range').value=Math.min(3000,v);updateTrack('budget-range')});
+
+/* TYPE */
+function setType(el){document.querySelectorAll('.type-chip').forEach(c=>c.classList.remove('on'));el.classList.add('on')}
+
+/* CUISINE FILTER */
+function toggleCuisine(el){
+  const val=el.dataset.v;
+  if(val===''){
+    document.querySelectorAll('.cuisine-chip').forEach(c=>c.classList.remove('on'));
+    el.classList.add('on');
+  }else{
+    document.querySelector('.cuisine-chip[data-v=""]')?.classList.remove('on');
+    el.classList.toggle('on');
+    if(!document.querySelector('.cuisine-chip.on'))
+      document.querySelector('.cuisine-chip[data-v=""]').classList.add('on');
+  }
+}
+function getSelectedCuisines(){
+  return[...document.querySelectorAll('.cuisine-chip.on')].map(c=>c.dataset.v).filter(v=>v!=='');
+}
+
+/* LOCATION */
+async function detectGPS(){
+  const sub=document.getElementById('gps-sub'),btn=document.getElementById('gps-btn');
+  sub.textContent='Detecting…';btn.style.opacity='.7';
+
+  // Try browser GPS first
+  if(navigator.geolocation){
+    try{
+      const pos=await new Promise((ok,fail)=>
+        navigator.geolocation.getCurrentPosition(ok,fail,{timeout:8000,enableHighAccuracy:false,maximumAge:120000}));
+      const lat=pos.coords.latitude,lon=pos.coords.longitude;
+      let name='Your Location';
+      try{const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`);const d=await r.json();name=(d.address?.city||d.address?.town||d.address?.village||'Your Area')+', India'}catch{}
+      btn.style.opacity='1';setLoc(lat,lon,name);sub.textContent='📍 '+name;toast('✅ Detected via GPS!');return;
+    }catch(e){
+      const reason=e.code===1?'Permission denied':'GPS timed out';
+      sub.textContent=reason+' – trying network…';
+    }
+  }
+
+  // IP-based fallback – works from file:// and http
+  try{
+    const r=await fetch('https://ipapi.co/json/');
+    const d=await r.json();
+    if(d.latitude&&(d.country_code==='IN'||!d.country_code)){
+      const name=(d.city||d.region||'Your City')+', India';
+      btn.style.opacity='1';setLoc(+d.latitude,+d.longitude,name);
+      sub.textContent='📍 '+name+' (via network)';toast('✅ Detected via network!');return;
+    }
+  }catch{}
+
+  btn.style.opacity='1';
+  sub.textContent='Auto-detect failed – please select your city below';
+  toast('⚠️ Could not detect location. Select a city manually.');
+}
+
+function setLoc(lat,lon,name){
+  APP.location={lat,lon,name};
+  const el=document.getElementById('loc-confirmed');
+  document.getElementById('loc-name-display').textContent=name;
+  el.style.display='flex';
+}
+
+function setCity(name,lat,lon){
+  document.querySelectorAll('.city-chip').forEach(c=>c.classList.remove('on'));
+  if(event?.currentTarget) event.currentTarget.classList.add('on');
+  document.getElementById('loc-input').value=name;
+  setLoc(lat,lon,name+', India');
+}
+
+let locT=null;
+function onLocInput(val){
+  clearTimeout(locT);
+  const sugg=document.getElementById('loc-sugg');
+  if(!val||val.length<3){sugg.classList.remove('open');return}
+  locT=setTimeout(async()=>{
+    try{
+      const res=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val+', India')}&format=json&limit=5&countrycodes=in&accept-language=en`);
+      const data=await res.json();
+      sugg.innerHTML='';
+      if(!data.length){sugg.classList.remove('open');return}
+      data.forEach(r=>{
+        const parts=r.display_name.split(',').slice(0,3).map(s=>s.trim());
+        const item=document.createElement('div');item.className='sugg-item';
+        item.innerHTML=`<strong>${parts[0]}</strong>, ${parts.slice(1).join(', ')}`;
+        item.onclick=()=>{setLoc(+r.lat,+r.lon,parts.join(', '));document.getElementById('loc-input').value=parts[0];sugg.classList.remove('open')};
+        sugg.appendChild(item);
+      });
+      sugg.classList.add('open');
+    }catch{sugg.classList.remove('open')}
+  },400);
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.loc-input-wrap'))document.getElementById('loc-sugg').classList.remove('open')});
+
+/* ─── FOURSQUARE CONFIG ───────────────────────────────────────────────────────
+   New API (as of 2025) — needs a SERVICE KEY (not the old fsq3... key):
+   1. Go to https://location.foursquare.com/developer
+   2. Sign Up / Log In → Create a Project → Places API
+   3. Generate a Service Key (starts with something other than fsq3)
+   4. Paste it below — auth is "Bearer <KEY>" + X-Places-Api-Version header
+   ────────────────────────────────────────────────────────────────────────── */
+const FSQ_KEY = ''; // Foursquare removed free tier in 2025 — leave blank
+
+async function fetchFoursquare(lat,lon,radiusKm,type,cuisines){
+  if(!FSQ_KEY)return null;
+  const r=radiusKm*1000;
+  // Foursquare category IDs: 13000=Food&Drink, 13065=Restaurant, 13032=Cafe, 13031=Coffee
+  const cats=type==='cafe'?'13032,13031':type==='restaurant'?'13065':'13000';
+  const fields='fsq_place_id,name,categories,location,latitude,longitude,distance,hours,tel,website,rating,price';
+  const url=`https://places-api.foursquare.com/places/search?ll=${lat},${lon}&radius=${r}&fsq_category_ids=${cats}&limit=50&fields=${fields}&sort=DISTANCE`;
+  const ctrl=new AbortController();
+  const tid=setTimeout(()=>ctrl.abort(),8000);
+  const res=await fetch(url,{headers:{Authorization:`Bearer ${FSQ_KEY}`,'X-Places-Api-Version':'2025-06-17',Accept:'application/json'},signal:ctrl.signal});
+  clearTimeout(tid);
+  if(!res.ok)throw new Error('Foursquare '+res.status);
+  const data=await res.json();
+  if(data.message)throw new Error('Foursquare: '+data.message);
+  let list=(data.results||[]).map(p=>({
+    id:`fsq${p.fsq_place_id}`,name:p.name,
+    cuisine:mapFsqCuisine(p.categories),
+    address:[p.location?.address,p.location?.locality].filter(Boolean).join(', '),
+    lat:p.latitude||lat,lon:p.longitude||lon,
+    distance:p.distance||0,
+    website:p.website||'',hours:p.hours?.display||'',phone:p.tel||'',
+    rating:p.rating,price:p.price
+  })).sort((a,b)=>a.distance-b.distance);
+  if(cuisines&&cuisines.length){const f=filterByCuisine(list,cuisines);if(f)list=f;else toast('\u26a0\ufe0f No exact cuisine match – showing all nearby');}
+  return list.length?list:null;
+}
+
+function mapFsqCuisine(cats){
+  const n=(cats?.[0]?.name||'').toLowerCase();
+  if(n.includes('south indian')||n.includes('udupi'))return 'south_indian';
+  if(n.includes('north indian'))return 'north_indian';
+  if(n.includes('mughlai')||n.includes('mughal'))return 'mughlai';
+  if(n.includes('biryani'))return 'biryani';
+  if(n.includes('chinese')||n.includes('hakka')||n.includes('manchurian'))return 'chinese';
+  if(n.includes('italian')||n.includes('pizza'))return 'italian';
+  if(n.includes('seafood')||n.includes('fish'))return 'seafood';
+  if(n.includes('bengali'))return 'bengali';
+  if(n.includes('rajasthani'))return 'rajasthani';
+  if(n.includes('gujarati'))return 'gujarati';
+  if(n.includes('kerala')||n.includes('malayali'))return 'kerala';
+  if(n.includes('hyderabadi'))return 'hyderabadi';
+  if(n.includes('maharashtrian'))return 'maharashtrian';
+  if(n.includes('punjabi'))return 'punjabi';
+  if(n.includes('street food')||n.includes('chaat'))return 'street_food';
+  if(n.includes('thai'))return 'thai';
+  if(n.includes('japanese')||n.includes('sushi'))return 'japanese';
+  if(n.includes('korean'))return 'korean';
+  if(n.includes('cafe')||n.includes('coffee'))return 'cafe';
+  if(n.includes('bakery'))return 'bakery';
+  if(n.includes('fast food')||n.includes('burger'))return 'fast_food';
+  if(n.includes('indian'))return 'north_indian';
+  return 'restaurant';
+}
+
+/* OVERPASS */
+async function fetchPlaces(lat,lon,radiusKm,type,cuisines){
+  // 1. Try Foursquare first (best data quality)
+  try{
+    const fsq=await fetchFoursquare(lat,lon,radiusKm,type,cuisines);
+    if(fsq){toast('\u2705 Live data from Foursquare',2000);return fsq;}
+  }catch(e){console.warn('Foursquare unavailable:',e.message);}
+
+  // 2. Fall back to OpenStreetMap Overpass
+  const r=radiusKm*1000;
+  const filter=type==='all'?'"amenity"~"restaurant|cafe|fast_food"':`"amenity"="${type}"`;
+  const q=`[out:json][timeout:20];(node[${filter}]["name"](around:${r},${lat},${lon}););out 80;`;
+  try{
+    const ctrl=new AbortController();
+    const tid=setTimeout(()=>ctrl.abort(),7000);
+    const res=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:q,signal:ctrl.signal});
+    clearTimeout(tid);
+    const data=await res.json();
+    let list=data.elements.filter(e=>e.tags?.name).map(e=>{
+      const t=e.tags;
+      const addr=[t['addr:housenumber'],t['addr:street'],t['addr:city']].filter(Boolean).join(', ');
+      return{id:`osm${e.id}`,name:t.name,cuisine:t.cuisine||t.amenity||'restaurant',
+        address:addr,lat:e.lat,lon:e.lon,distance:haversine(lat,lon,e.lat,e.lon),
+        website:t.website||t['contact:website']||'',hours:t.opening_hours||'',phone:t.phone||t['contact:phone']||''};
+    }).sort((a,b)=>a.distance-b.distance);
+    if(cuisines&&cuisines.length){const f=filterByCuisine(list,cuisines);if(f)list=f;else toast('No exact cuisine match in your area – showing all nearby');}
+    return list.slice(0,30).length?list.slice(0,30):demoPlaces(lat,lon,cuisines);
+  }catch{return demoPlaces(lat,lon,cuisines)}
+}
+function matchesCuisine(cuisine,picks){
+  // cuisine from OSM can be 'north_indian', 'pizza;italian', 'cafe' etc.
+  const parts=(cuisine||'').toLowerCase().split(/[;,\s]+/).map(p=>p.replace(/[^a-z_]/g,'').trim()).filter(Boolean);
+  return picks.some(pick=>parts.some(p=>p===pick||p.startsWith(pick)||pick.startsWith(p.split('_')[0])));
+}
+function filterByCuisine(list,cuisines){
+  const filtered=list.filter(r=>matchesCuisine(r.cuisine,cuisines));
+  return filtered.length?filtered:null;
+}
+
+function demoPlaces(lat,lon,cuisines){
+  // Find city-specific restaurants by matching location name
+  const locName=(APP.location?.name||'').toLowerCase();
+  const cityKey=Object.keys(CITY_DEMOS).find(k=>locName.includes(k));
+  const raw=cityKey?CITY_DEMOS[cityKey]:null;
+
+  let all;
+  if(raw){
+    // City found – use real restaurant coordinates, compute haversine distances
+    all=raw.map(([name,cuisine,address,rlat,rlon],i)=>({
+      id:`demo${i}`,name,cuisine,address,lat:rlat,lon:rlon,
+      distance:haversine(lat,lon,rlat,rlon),website:'',hours:'',phone:'',isDemo:true
+    })).sort((a,b)=>a.distance-b.distance);
+  }else{
+    // Unknown city – scatter generic spots around selected point
+    all=[
+      ['Barbeque Nation','north_indian','City Centre',lat+0.012,lon+0.008],
+      ['Farzi Cafe','mughlai','Central Mall',lat+0.005,lon-0.015],
+      ['Social Offline','cafe','High Street',lat-0.008,lon+0.012],
+      ['Biryani By Kilo','biryani','Main Road',lat+0.018,lon-0.005],
+      ['Third Wave Coffee','cafe','Metro Station',lat-0.006,lon-0.010],
+      ['Mainland China','chinese','City Mall',lat+0.022,lon+0.017],
+    ].map(([name,cuisine,address,rlat,rlon],i)=>({
+      id:`demo${i}`,name,cuisine,address,lat:rlat,lon:rlon,
+      distance:haversine(lat,lon,rlat,rlon),website:'',hours:'',phone:'',isDemo:true
+    })).sort((a,b)=>a.distance-b.distance);
+  }
+
+  if(cuisines&&cuisines.length){
+    const f=filterByCuisine(all,cuisines);
+    if(f)return f;
+    toast('\u26a0\ufe0f No '+cuisines.join('/')+' places in demo \u2013 showing all nearby');
+  }
+  return all;
+}
+
+/* REDDIT */
+const redditSearchUrl=name=>`https://www.reddit.com/search/?q=${encodeURIComponent('"'+name+'" India review')}`;
+
+async function fetchReddit(name,city){
+  const q=encodeURIComponent(`"${name}" ${city||'India'} review`);
+  try{
+    const res=await fetch(`https://www.reddit.com/search.json?q=${q}&sort=relevance&limit=5&t=all&type=link&raw_json=1`);
+    if(!res.ok)throw new Error();
+    const d=await res.json();
+    return(d?.data?.children||[]).filter(c=>c?.data?.title).slice(0,3).map(c=>({
+      title:c.data.title,sub:c.data.subreddit_name_prefixed,score:c.data.score,
+      comments:c.data.num_comments,url:'https://reddit.com'+c.data.permalink,
+      snippet:(c.data.selftext||'').slice(0,160).trim(),
+    }));
+  }catch{return null}
+}
+
+/* BROADCAST CHANNEL */
+let CH=null,retryT=null,localT=null,joinTimeoutT=null;
+let PEER=null,PCONN=null; // PeerJS for cross-device sync
+
+/* ─── PEERJS (CROSS-DEVICE) ─────────────────────────────────────────────────
+   Enables real-time sync between ANY two devices on ANY network.
+   Uses PeerJS public cloud for WebRTC signaling — free, no account needed.
+   Automatically falls back to same-device mode if WebRTC is unavailable.
+   ─────────────────────────────────────────────────────────────────────────── */
+function initPeer(code){
+  if(typeof Peer==='undefined')return; // PeerJS script not loaded
+  const peerId='foodmatch-'+code;
+  function handlePeerData(data){if(data&&data.from!==APP.uid)onMsg({data});}
+  function destroyPeer(){try{PEER?.destroy();}catch{}PEER=null;PCONN=null;}
+
+  if(APP.role==='creator'){
+    try{
+      PEER=new Peer(peerId,{debug:0});
+      PEER.on('open',()=>setP2pStatus('📡 Ready for cross-device join'));
+      PEER.on('connection',conn=>{
+        PCONN=conn;
+        conn.on('open',()=>{
+          setP2pStatus('🌐 Partner connected (cross-device)');
+          setPartner(true);
+          // Send restaurants to partner if already fetched
+          if(APP.restaurants.length)conn.send({type:'init',restaurants:APP.restaurants,settings:APP.settings,from:APP.uid});
+        });
+        conn.on('data',handlePeerData);
+        conn.on('close',()=>{PCONN=null;setP2pStatus('');});
+      });
+      PEER.on('error',e=>{
+        if(e.type==='unavailable-id'){toast('⚠️ Room code in use, generating new one…');} // rare
+        console.warn('PeerJS creator:',e.type);
+      });
+    }catch(e){console.warn('PeerJS init failed:',e.message);}
+
+  }else{
+    // Joiner — connect to creator's peer
+    try{
+      PEER=new Peer(APP.uid,{debug:0}); // unique peer ID per session
+      PEER.on('open',()=>{
+        setP2pStatus('🔗 Trying cross-device connection…');
+        PCONN=PEER.connect(peerId,{reliable:true,serialization:'json'});
+        PCONN.on('open',()=>{
+          setP2pStatus('🌐 Connected cross-device!');
+          PCONN.send({type:'join',from:APP.uid});
+        });
+        PCONN.on('data',handlePeerData);
+        PCONN.on('close',()=>{PCONN=null;});
+      });
+      PEER.on('error',e=>{
+        // peer-unavailable means creator tab isn't open yet — handled by localStorage polling
+        if(e.type!=='peer-unavailable')console.warn('PeerJS joiner:',e.type);
+        setP2pStatus('');
+      });
+    }catch(e){console.warn('PeerJS joiner init failed:',e.message);}
+  }
+}
+
+function sendPeer(msg){
+  try{if(PCONN&&PCONN.open)PCONN.send({...msg,from:APP.uid});}catch{}
+}
+
+function setP2pStatus(text){
+  // Show as a subtle sub-status under the main lobby status
+  let el=document.getElementById('p2p-status');
+  if(!el){
+    el=document.createElement('p');el.id='p2p-status';
+    el.style.cssText='font-size:11px;color:var(--amber);opacity:.7;margin:0;min-height:16px;';
+    document.getElementById('lobby-status')?.insertAdjacentElement('afterend',el);
+  }
+  el.textContent=text;
+}
+function openCh(code){if(typeof BroadcastChannel==='undefined')return false;CH=new BroadcastChannel(`fm-${code}`);CH.onmessage=onMsg;initPeer(code);return true}
+function send(msg){if(CH)CH.postMessage({...msg,from:APP.uid});sendPeer(msg);}
+function onMsg(ev){
+  const m=ev.data;if(m.from===APP.uid)return;
+  if(m.type==='join'&&APP.role==='creator'&&APP.restaurants.length){send({type:'init',restaurants:APP.restaurants,settings:APP.settings});setPartner(true)}
+  if(m.type==='init'&&APP.role==='joiner'){clearInterval(retryT);APP.restaurants=m.restaurants;APP.settings=m.settings;send({type:'ready'});setPartner(true);setStatus('Connected! Starting…');setTimeout(startSwiping,600)}
+  if(m.type==='ready'&&APP.role==='creator'){setPartner(true);setStatus('Partner joined! Starting…');setTimeout(startSwiping,600)}
+  if(m.type==='swipe'&&m.liked){APP.theirs[m.id]=true;if(APP.mine[m.id]===true&&!APP.matched)triggerMatch(m.id)}
+  if(m.type==='match'&&!APP.matched){const r=APP.restaurants.find(x=>x.id===m.id);if(r)showMatch(r)}
+}
+function setPartner(on){APP.partnerOn=on;document.getElementById('p-dot')?.classList.toggle('on',on);const l=document.getElementById('p-label');if(l)l.textContent=on?'Partner online':'Waiting…'}
+function setStatus(t){const el=document.getElementById('lobby-status');if(el)el.textContent=t}
+
+/* CREATE / JOIN */
+async function createRoom(){
+  if(!APP.location){toast('⚠️ Please set your location first');return}
+  const radius=+document.getElementById('radius-num').value||3;
+  const budget=+document.getElementById('budget-num').value||600;
+  const type=document.querySelector('.type-chip.on')?.dataset.v||'all';
+  const cuisines=getSelectedCuisines();
+  Object.assign(APP,{role:'creator',uid:mkUid(),code:mkCode(),settings:{radius,budget,type,cuisines},restaurants:[],idx:0,mine:{},theirs:{},matched:false,partnerOn:false});
+  document.getElementById('lobby-code').textContent=APP.code;
+  document.getElementById('lobby-title').textContent='🎉 Room Created!';
+  document.getElementById('lobby-sub').textContent='Share this code with your friend';
+  setStatus('Finding restaurants near you…');nav('lobby');openCh(APP.code);
+  try{
+    APP.restaurants=await fetchPlaces(APP.location.lat,APP.location.lon,radius,type,cuisines);
+    setStatus(`Found ${APP.restaurants.length} spots 🍴  Waiting for your partner…`);
+    document.getElementById('solo-btn').style.display='inline-flex';
+    localStorage.setItem('fm-'+APP.code,JSON.stringify({restaurants:APP.restaurants,settings:APP.settings,ts:Date.now()}));
+    send({type:'init',restaurants:APP.restaurants,settings:APP.settings});
+    // Push to peer if already connected cross-device
+    if(PCONN&&PCONN.open)PCONN.send({type:'init',restaurants:APP.restaurants,settings:APP.settings,from:APP.uid});
+  }catch{
+    APP.restaurants=demoPlaces(APP.location.lat,APP.location.lon,cuisines);
+    const cityShown=(APP.location?.name||'').split(',')[0];
+    setStatus(`Showing sample ${cityShown} restaurants · Distances from city centre · Waiting for partner…`);
+    document.getElementById('solo-btn').style.display='inline-flex';
+    localStorage.setItem('fm-'+APP.code,JSON.stringify({restaurants:APP.restaurants,settings:APP.settings,ts:Date.now()}));
+    send({type:'init',restaurants:APP.restaurants,settings:APP.settings});
+    if(PCONN&&PCONN.open)PCONN.send({type:'init',restaurants:APP.restaurants,settings:APP.settings,from:APP.uid});
+  }
+}
+
+function joinRoom(){
+  const code=document.getElementById('join-input').value.trim().toUpperCase();
+  if(code.length<4){toast('⚠️ Enter a valid room code');return}
+  Object.assign(APP,{role:'joiner',uid:mkUid(),code,restaurants:[],idx:0,mine:{},theirs:{},matched:false,partnerOn:false});
+  document.getElementById('lobby-code').textContent=code;
+  document.getElementById('lobby-title').textContent='🔗 Joined!';
+  document.getElementById('lobby-sub').textContent="Connecting to your friend's room…";
+  setStatus('Waiting for host…');nav('lobby');openCh(code);
+
+  function applyInit(restaurants,settings){
+    if(APP.restaurants.length)return; // already handled
+    clearInterval(retryT);clearInterval(localT);clearTimeout(joinTimeoutT);
+    APP.restaurants=restaurants;APP.settings=settings;
+    send({type:'ready'});setPartner(true);setStatus('Connected! Starting…');setTimeout(startSwiping,600);
+  }
+
+  // Poll localStorage (works even if BroadcastChannel misses the message)
+  function checkLocal(){
+    try{
+      const raw=localStorage.getItem('fm-'+code);
+      if(!raw)return;
+      const d=JSON.parse(raw);
+      if(Date.now()-d.ts>30*60*1000)return; // expired after 30 min
+      applyInit(d.restaurants,d.settings);
+    }catch{}
+  }
+  checkLocal(); // check immediately (creator may already be done)
+  localT=setInterval(()=>APP.restaurants.length?clearInterval(localT):checkLocal(),800);
+
+  // BroadcastChannel retry
+  const tryJ=()=>send({type:'join'});tryJ();
+  retryT=setInterval(()=>APP.restaurants.length?clearInterval(retryT):tryJ(),1800);
+
+  // Timeout hint after 20s
+  joinTimeoutT=setTimeout(()=>{
+    if(!APP.restaurants.length)setStatus('⚠️ Still waiting… Make sure the creator is on the same device & browser. Use the "Open Demo Tab" button on their screen to test.');
+  },20000);
+}
+
+/* SWIPING */
+function startSwiping(){if(!APP.restaurants.length){toast('No restaurants found');return nav('home')}APP.idx=0;APP.matched=false;updateCounter();nav('swipe');renderCards();try{localStorage.removeItem('fm-'+APP.code)}catch{}}
+
+function renderCards(){
+  const stage=document.getElementById('card-stage');stage.innerHTML='';
+  const slice=APP.restaurants.slice(APP.idx,APP.idx+3);
+  if(!slice.length)return nav('bust');
+  [...slice].reverse().forEach((r,i)=>{const depth=slice.length-1-i;stage.appendChild(buildCard(r,depth===0,depth))});
+}
+
+function buildCard(r,isTop,depth){
+  const[emoji,grad]=getTheme(r.cuisine);
+  const dishes=getDishes(r.cuisine).slice(0,3);
+  const card=document.createElement('div');
+  card.className='rcard'+(isTop?' top-card':'');card.dataset.id=r.id;
+  const yo=depth*8,sc=1-depth*.04;
+  card.style.cssText=`transform:translateY(${yo}px) scale(${sc});z-index:${10-depth};`;
+  card.innerHTML=`
+    <div class="card-photo" style="background:linear-gradient(${grad})">
+      <div class="card-big-emoji">${emoji}</div>
+      <div class="badge badge-like">LIKE 💚</div>
+      <div class="badge badge-nope">NOPE ❌</div>
+    </div>
+    <div class="card-body">
+      <div class="card-name">${r.name}</div>
+      <div class="card-row">
+        <span class="cuisine-tag">${r.cuisine.replace(/_/g,' ')}</span>
+        <span class="budget-tag">${fmtRs(APP.settings.budget)}</span>
+        <span class="dist-tag">📍 ${r.distance?fmtDist(r.distance)+' away':'Nearby'}</span>
+        ${r.rating?`<span class="demo-tag" style="color:#22c55e;border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.08)">⭐ ${r.rating.toFixed(1)}</span>`:''}
+        ${r.price?`<span class="demo-tag">${'₹'.repeat(r.price)}</span>`:''}
+        ${r.isDemo?'<span class="demo-tag">Demo</span>':''}
+      </div>
+      ${r.address?`<div class="card-addr">${r.address}</div>`:''}
+      <div class="dishes-row">${dishes.map(d=>`<span class="dish-pill">🍽 ${d}</span>`).join('')}</div>
+      <div class="reddit-hint"><span>💬</span> Tap ℹ for Reddit reviews &amp; more info</div>
+    </div>`;
+  if(isTop)attachSwipe(card,r);
+  return card;
+}
+
+function attachSwipe(card,r){
+  let sx=0,sy=0,cx=0;
+  const updB=dx=>{const L=card.querySelector('.badge-like'),N=card.querySelector('.badge-nope');if(dx>40){L.style.opacity=Math.min(1,(dx-40)/70);N.style.opacity=0}else if(dx<-40){N.style.opacity=Math.min(1,(-dx-40)/70);L.style.opacity=0}else{L.style.opacity=0;N.style.opacity=0}};
+  const decide=()=>{card.style.transition='transform .4s cubic-bezier(.25,.46,.45,.94),opacity .4s ease';if(cx>90)flyOff(card,r,'right');else if(cx<-90)flyOff(card,r,'left');else{card.style.transform='translateY(0) scale(1)';updB(0)}};
+  card.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;card.style.transition='none'},{passive:true});
+  card.addEventListener('touchmove',e=>{e.preventDefault();cx=e.touches[0].clientX-sx;const cy=(e.touches[0].clientY-sy)*.3;card.style.transform=`translate(${cx}px,${cy}px) rotate(${cx*.08}deg)`;updB(cx)},{passive:false});
+  card.addEventListener('touchend',decide);
+  const onMM=e=>{cx=e.clientX-sx;const cy=(e.clientY-sy)*.3;card.style.transform=`translate(${cx}px,${cy}px) rotate(${cx*.08}deg)`;updB(cx)};
+  const onMU=()=>{decide();document.removeEventListener('mousemove',onMM);document.removeEventListener('mouseup',onMU)};
+  card.addEventListener('mousedown',e=>{e.preventDefault();sx=e.clientX;sy=e.clientY;cx=0;card.style.transition='none';document.addEventListener('mousemove',onMM);document.addEventListener('mouseup',onMU)});
+}
+
+function flyOff(card,r,dir){
+  const liked=dir==='right';
+  card.style.transform=`translateX(${liked?window.innerWidth*1.6:-window.innerWidth*1.6}px) rotate(${liked?28:-28}deg)`;
+  card.style.opacity='0';
+  APP.mine[r.id]=liked;updateCounter();
+  if(liked){send({type:'swipe',id:r.id,liked:true});if(APP.theirs[r.id]===true&&!APP.matched)triggerMatch(r.id)}
+  setTimeout(()=>{card.remove();APP.idx++;renderCards()},420);
+}
+
+function btnSwipe(dir){
+  const top=document.querySelector('.top-card');if(!top)return;
+  const r=APP.restaurants.find(x=>x.id===top.dataset.id);if(!r)return;
+  const b=top.querySelector(dir==='right'?'.badge-like':'.badge-nope');if(b)b.style.opacity='1';
+  setTimeout(()=>flyOff(top,r,dir),80);
+}
+
+function updateCounter(){document.getElementById('s-cur').textContent=APP.idx;document.getElementById('s-tot').textContent=APP.restaurants.length}
+
+/* INFO PANEL */
+function openInfoPanel(){
+  const top=document.querySelector('.top-card');if(!top)return;
+  const r=APP.restaurants.find(x=>x.id===top.dataset.id);if(!r)return;
+  const[emoji,grad]=getTheme(r.cuisine);
+  const dishes=getDishes(r.cuisine);
+  const city=(APP.location?.name||'').split(',')[0]||'India';
+
+  document.getElementById('panel-img').innerHTML=`<div class="panel-header-emoji">${emoji}</div>`;
+  document.getElementById('panel-img').style.background=`linear-gradient(${grad})`;
+
+  document.getElementById('panel-content').innerHTML=`
+    <div class="panel-title">${r.name}</div>
+    <div class="panel-meta">
+      <div class="meta-pill">🍽 <b>${r.cuisine.replace(/_/g,' ')}</b></div>
+      <div class="meta-pill">📍 <b>${r.distance?fmtDist(r.distance)+' away':'Nearby'}</b></div>
+      <div class="meta-pill">💰 <b>${fmtRs(APP.settings.budget)}/person</b></div>
+      ${r.rating?`<div class="meta-pill">⭐ <b>${r.rating.toFixed(1)} / 10</b></div>`:''}
+      ${r.price?`<div class="meta-pill">${'₹'.repeat(r.price)} <b>${['','Budget','Moderate','Upscale','Fine dining'][r.price]||''}</b></div>`:''}
+      ${r.hours?`<div class="meta-pill">🕒 <b>${r.hours}</b></div>`:''}
+      ${r.phone?`<div class="meta-pill">📞 <b>${r.phone}</b></div>`:''}
+      ${r.address?`<div class="meta-pill">🏠 ${r.address}</div>`:''}
+    </div>
+    <div>
+      <div class="psec-title">🌟 Popular Dishes</div>
+      <div class="dishes-grid">${dishes.map(d=>`<span class="dish-tag">${d}</span>`).join('')}</div>
+    </div>
+    <div id="reddit-sec">
+      <div class="reddit-header">
+        <div class="reddit-logo">💬 Reddit Reviews</div>
+        <a class="reddit-search-link" href="${redditSearchUrl(r.name)}" target="_blank" rel="noopener">Search Reddit →</a>
+      </div>
+      <div class="reddit-loading"><div class="spinner" style="width:18px;height:18px;border-width:2px"></div> Fetching discussions…</div>
+    </div>
+    <div class="panel-actions">
+      <a class="btn btn-primary" href="${mapsUrl(r)}" target="_blank" rel="noopener">🗺 Maps</a>
+      ${r.website?`<a class="btn btn-outline" href="${r.website}" target="_blank" rel="noopener">🌐 Website</a>`:''}
+      <a class="btn btn-outline" href="${redditSearchUrl(r.name)}" target="_blank" rel="noopener">💬 Reddit</a>
+    </div>`;
+
+  document.getElementById('panel-overlay').classList.add('open');
+  document.getElementById('info-panel').classList.add('open');
+
+  fetchReddit(r.name,city).then(reviews=>{
+    const sec=document.getElementById('reddit-sec');if(!sec)return;
+    if(reviews===null){
+      sec.innerHTML=`<div class="reddit-header"><div class="reddit-logo">💬 Reddit Reviews</div><a class="reddit-search-link" href="${redditSearchUrl(r.name)}" target="_blank" rel="noopener">Search Reddit →</a></div><div class="reddit-empty">Open Reddit to see real reviews.<br><a href="${redditSearchUrl(r.name)}" target="_blank" rel="noopener">Search "${r.name}" on Reddit →</a></div>`;return;
+    }
+    if(!reviews.length){
+      sec.innerHTML=`<div class="reddit-header"><div class="reddit-logo">💬 Reddit Reviews</div><a class="reddit-search-link" href="${redditSearchUrl(r.name)}" target="_blank" rel="noopener">Search Reddit →</a></div><div class="reddit-empty">No Reddit discussions found.<br><a href="${redditSearchUrl(r.name)}" target="_blank" rel="noopener">Try searching manually →</a></div>`;return;
+    }
+    sec.innerHTML=`<div class="reddit-header"><div class="reddit-logo">💬 Reddit (${reviews.length})</div><a class="reddit-search-link" href="${redditSearchUrl(r.name)}" target="_blank" rel="noopener">View all →</a></div>`
+      +reviews.map(rv=>`<div class="review-card"><div class="review-sub">${rv.sub} · ↑${rv.score} · ${rv.comments} comments</div><div class="review-title">${rv.title}</div>${rv.snippet?`<div class="review-snippet">"${rv.snippet}…"</div>`:''}<div class="review-footer"><span class="review-score"></span><a class="review-link" href="${rv.url}" target="_blank" rel="noopener">Read Thread →</a></div></div>`).join('');
+  });
+}
+
+function closeInfoPanel(){
+  document.getElementById('panel-overlay').classList.remove('open');
+  document.getElementById('info-panel').classList.remove('open');
+}
+
+/* MATCH */
+function triggerMatch(id){APP.matched=true;const r=APP.restaurants.find(x=>x.id===id);if(!r)return;send({type:'match',id});showMatch(r)}
+function showMatch(r){
+  APP.matched=true;const[emoji,grad]=getTheme(r.cuisine);
+  document.getElementById('match-glow').style.background=`linear-gradient(${grad})`;
+  document.getElementById('match-card').innerHTML=`<div class="match-photo" style="background:linear-gradient(${grad})">${emoji}</div><div class="match-info"><h2>${r.name}</h2><p>${r.cuisine.replace(/_/g,' ')} · ${r.address||'See on map'}</p><p style="margin-top:6px;color:var(--amber)">${fmtRs(APP.settings.budget)}/person budget</p></div>`;
+  document.getElementById('maps-link').href=mapsUrl(r);nav('match');setTimeout(confetti,80);
+}
+
+/* CONFETTI */
+function confetti(){
+  const cvs=document.createElement('canvas');cvs.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9999';document.body.appendChild(cvs);
+  const ctx=cvs.getContext('2d');cvs.width=window.innerWidth;cvs.height=window.innerHeight;
+  const cols=['#f59e0b','#ea7c1e','#22c55e','#ef4444','#fbbf24','#c9a26a','#ff6b35'];
+  const bits=Array.from({length:130},()=>({x:Math.random()*cvs.width,y:-20,sz:Math.random()*10+4,col:cols[Math.floor(Math.random()*cols.length)],vx:(Math.random()-.5)*6,vy:Math.random()*3+2,rot:Math.random()*360,rs:(Math.random()-.5)*9,round:Math.random()>.4}));
+  let f=0;(function frame(){ctx.clearRect(0,0,cvs.width,cvs.height);bits.forEach(b=>{b.x+=b.vx;b.y+=b.vy;b.rot+=b.rs;b.vy+=.07;ctx.save();ctx.translate(b.x,b.y);ctx.rotate(b.rot*Math.PI/180);ctx.fillStyle=b.col;if(b.round){ctx.beginPath();ctx.arc(0,0,b.sz/2,0,6.28);ctx.fill()}else ctx.fillRect(-b.sz/2,-b.sz/3,b.sz,b.sz*.6);ctx.restore()});if(++f<200)requestAnimationFrame(frame);else cvs.remove()})();
+}
+
+/* HELPERS */
+function copyCode(){navigator.clipboard?.writeText(APP.code).then(()=>{const b=document.querySelector('.copy-btn');b.textContent='✓';setTimeout(()=>b.textContent='📋',1800)}).catch(()=>toast(APP.code))}
+function openDemoTab(){const url=new URL(location.href);url.searchParams.set('join',APP.code);window.open(url.toString(),'_blank')}
+function playAgain(){APP.mine={};APP.theirs={};APP.idx=0;APP.matched=false;startSwiping()}
+
+function checkUrl(){const p=new URLSearchParams(location.search);const c=p.get('join');if(c){document.getElementById('join-input').value=c.toUpperCase();setTimeout(joinRoom,350)}}
+
+function initTracks(){['radius-range','budget-range'].forEach(id=>{const el=document.getElementById(id);if(!el)return;const pct=((+el.value-+el.min)/(+el.max-+el.min)*100).toFixed(1);el.style.setProperty('--pct',pct+'%')})}
+
+initFloaters();initTracks();checkUrl();
+</script>
+</body>
+</html>
