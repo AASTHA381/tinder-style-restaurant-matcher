@@ -923,78 +923,9 @@ function onLocInput(val){
 }
 document.addEventListener('click',e=>{if(!e.target.closest('.loc-input-wrap'))document.getElementById('loc-sugg').classList.remove('open')});
 
-/* ─── FOURSQUARE CONFIG ───────────────────────────────────────────────────────
-   New API (as of 2025) — needs a SERVICE KEY (not the old fsq3... key):
-   1. Go to https://location.foursquare.com/developer
-   2. Sign Up / Log In → Create a Project → Places API
-   3. Generate a Service Key (starts with something other than fsq3)
-   4. Paste it below — auth is "Bearer <KEY>" + X-Places-Api-Version header
-   ────────────────────────────────────────────────────────────────────────── */
-const FSQ_KEY = ''; // Foursquare removed free tier in 2025 — leave blank
-
-async function fetchFoursquare(lat,lon,radiusKm,type,cuisines){
-  if(!FSQ_KEY)return null;
-  const r=radiusKm*1000;
-  // Foursquare category IDs: 13000=Food&Drink, 13065=Restaurant, 13032=Cafe, 13031=Coffee
-  const cats=type==='cafe'?'13032,13031':type==='restaurant'?'13065':'13000';
-  const fields='fsq_place_id,name,categories,location,latitude,longitude,distance,hours,tel,website,rating,price';
-  const url=`https://places-api.foursquare.com/places/search?ll=${lat},${lon}&radius=${r}&fsq_category_ids=${cats}&limit=50&fields=${fields}&sort=DISTANCE`;
-  const ctrl=new AbortController();
-  const tid=setTimeout(()=>ctrl.abort(),8000);
-  const res=await fetch(url,{headers:{Authorization:`Bearer ${FSQ_KEY}`,'X-Places-Api-Version':'2025-06-17',Accept:'application/json'},signal:ctrl.signal});
-  clearTimeout(tid);
-  if(!res.ok)throw new Error('Foursquare '+res.status);
-  const data=await res.json();
-  if(data.message)throw new Error('Foursquare: '+data.message);
-  let list=(data.results||[]).map(p=>({
-    id:`fsq${p.fsq_place_id}`,name:p.name,
-    cuisine:mapFsqCuisine(p.categories),
-    address:[p.location?.address,p.location?.locality].filter(Boolean).join(', '),
-    lat:p.latitude||lat,lon:p.longitude||lon,
-    distance:p.distance||0,
-    website:p.website||'',hours:p.hours?.display||'',phone:p.tel||'',
-    rating:p.rating,price:p.price
-  })).sort((a,b)=>a.distance-b.distance);
-  if(cuisines&&cuisines.length){const f=filterByCuisine(list,cuisines);if(f)list=f;else toast('\u26a0\ufe0f No exact cuisine match – showing all nearby');}
-  return list.length?list:null;
-}
-
-function mapFsqCuisine(cats){
-  const n=(cats?.[0]?.name||'').toLowerCase();
-  if(n.includes('south indian')||n.includes('udupi'))return 'south_indian';
-  if(n.includes('north indian'))return 'north_indian';
-  if(n.includes('mughlai')||n.includes('mughal'))return 'mughlai';
-  if(n.includes('biryani'))return 'biryani';
-  if(n.includes('chinese')||n.includes('hakka')||n.includes('manchurian'))return 'chinese';
-  if(n.includes('italian')||n.includes('pizza'))return 'italian';
-  if(n.includes('seafood')||n.includes('fish'))return 'seafood';
-  if(n.includes('bengali'))return 'bengali';
-  if(n.includes('rajasthani'))return 'rajasthani';
-  if(n.includes('gujarati'))return 'gujarati';
-  if(n.includes('kerala')||n.includes('malayali'))return 'kerala';
-  if(n.includes('hyderabadi'))return 'hyderabadi';
-  if(n.includes('maharashtrian'))return 'maharashtrian';
-  if(n.includes('punjabi'))return 'punjabi';
-  if(n.includes('street food')||n.includes('chaat'))return 'street_food';
-  if(n.includes('thai'))return 'thai';
-  if(n.includes('japanese')||n.includes('sushi'))return 'japanese';
-  if(n.includes('korean'))return 'korean';
-  if(n.includes('cafe')||n.includes('coffee'))return 'cafe';
-  if(n.includes('bakery'))return 'bakery';
-  if(n.includes('fast food')||n.includes('burger'))return 'fast_food';
-  if(n.includes('indian'))return 'north_indian';
-  return 'restaurant';
-}
-
 /* OVERPASS */
 async function fetchPlaces(lat,lon,radiusKm,type,cuisines){
-  // 1. Try Foursquare first (best data quality)
-  try{
-    const fsq=await fetchFoursquare(lat,lon,radiusKm,type,cuisines);
-    if(fsq){toast('\u2705 Live data from Foursquare',2000);return fsq;}
-  }catch(e){console.warn('Foursquare unavailable:',e.message);}
-
-  // 2. Fall back to OpenStreetMap Overpass
+  // Live restaurants from OpenStreetMap Overpass (free, no key)
   const r=radiusKm*1000;
   const filter=type==='all'?'"amenity"~"restaurant|cafe|fast_food"':`"amenity"="${type}"`;
   const q=`[out:json][timeout:20];(node[${filter}]["name"](around:${r},${lat},${lon}););out 80;`;
